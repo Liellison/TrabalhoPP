@@ -17,10 +17,11 @@ void novo (int **A, int **B, int nLinhas, int nColunas);
  
 int main(int argc, char* argv[]){
     FILE *fileIn, *fileOUT;
-    int numeroDeCidades, populacao, numeroDeGeracoes,i, j;
+    int numeroDeCidades, populacao, numeroDeGeracoes,j;//i
     int **pais;
     int **geracao;
     float **matrizDeDistancia;
+    float **matrizDeDistanciaGlobal;
     float distancia;
     srand(time(0));
     /* inicializacao mpi*/
@@ -53,18 +54,19 @@ int main(int argc, char* argv[]){
             printf("Numero de geracoes: %d\n",numeroDeGeracoes);
  
             matrizDeDistancia = (float**)malloc(sizeof(float)*numeroDeCidades);
+            //matrizDeDistanciaGlobal == (float**)malloc(numeroDeCidades*numeroDeCidades*sizeof(float));
  
-            for(i=0; i<numeroDeCidades;i++){
+            for(i=0;i<numeroDeCidades;i++){
                 matrizDeDistancia[i]=(float*)malloc(sizeof(float)*(numeroDeCidades));
                 for(j=0;j<numeroDeCidades;j++){
                     fscanf(fileIn,"%f",&distancia);
                     matrizDeDistancia[i][j]=distancia;
+                    //matrizDeDistanciaGlobal[i*numeroDeCidades*j] = 0.0;
                 }
             }
         }/*Fim else*/
         fclose(fileIn);
-    /*Fim leitura*/
-    }
+    }    /*Fim id 0*/
 
         pais=(int**)malloc(sizeof(int*)*populacao);
         geracao=(int**)malloc(sizeof(int*)*populacao);
@@ -103,8 +105,11 @@ int main(int argc, char* argv[]){
         free(pais);
         free(geracao);
         getchar();
+
+        MPI_Finalize();
+	    return 0;
     }
-    return 0;
+
    /*} Era o fim do while*/
  
 /* uma funcao que retorna um numero aleatorio no intervalo <0;-1> */
