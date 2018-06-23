@@ -66,7 +66,7 @@ int main(int argc, char* argv[]){
             }
         }/*Fim else*/
         fclose(fileIn);
-    }    /*Fim id 0*/
+    }else {    /*Fim id 0*/
 
         pais=(int**)malloc(sizeof(int*)*populacao);
         geracao=(int**)malloc(sizeof(int*)*populacao);
@@ -105,9 +105,9 @@ int main(int argc, char* argv[]){
         free(pais);
         free(geracao);
         getchar();
-
+        }
         MPI_Finalize();
-	    return 0;
+        return 0;
     }
 
    /*} Era o fim do while*/
