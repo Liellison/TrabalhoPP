@@ -4,11 +4,11 @@
 #include <string.h>
 #include <math.h>
 #include <mpi.h>
- 
+
 int desenhar (int intervalo);
 int checkRepeticoes (int *cromossomo, int nn, int numero);
 int *aleatorio (int numeroOf);
-void criaPais (int **pais, int numeroDeCidades, int numeroPais);
+void criaPais (int **pais, int numeroDeCidades[], int numeroPais);
 float calcularCusto(int tamanho, int *solucao, float **matrizDeDistancia);
 void clasificacao (int **solucoes, int numeroCidade, int populacao, float **matrizDeDistancia);
 void propagacao (int **pais, int **geracao, int numeroPais, int tamanhoGene);
@@ -26,6 +26,8 @@ int main(int argc, char* argv[]){
     srand(time(0));
     /* inicializacao mpi*/
     int id, tam, i;
+    int Mv[numeroDeCidades * numeroDeCidades];
+    int vec = 0;
     MPI_Status status;
 
     MPI_Init(&argc,&argv); 
@@ -61,17 +63,23 @@ int main(int argc, char* argv[]){
                 for(j=0;j<numeroDeCidades;j++){
                     fscanf(fileIn,"%f",&distancia);
                     matrizDeDistancia[i][j]=distancia;
-                    //matrizDeDistanciaGlobal[i*numeroDeCidades*j] = 0.0;
+                    //matrizDeDistanciaGlobal[i*numeroDeCidades+j] = 0.0;
                 }
             }
-        }/*Fim else*/
-        fclose(fileIn);
-    }else {    /*Fim id 0*/
+            for(i =0; i < numeroDeCidades; i++){
+                for(j=0; j<numeroDeCidades; j++){
+                    Mv[vec] = matrizDeDistancia[i][j];
+                    vec = vec +1;
+                }
+            }
 
+        }
+        fclose(fileIn);
+    }else {
         pais=(int**)malloc(sizeof(int*)*populacao);
         geracao=(int**)malloc(sizeof(int*)*populacao);
  
-        criaPais(pais,numeroDeCidades,populacao);
+        criaPais(pais,Mv,populacao);
         clasificacao(pais, numeroDeCidades, populacao, matrizDeDistancia);
  
         fileOUT =fopen(argv[2],"w");
@@ -147,8 +155,8 @@ int *aleatorio(int numeroOf){
     return nDesenhados;
 }
 /* A funcao geradora da primeira geracao de solucaes - pais */
-void criaPais(int **pais, int numeroDeCidades, int numeroPais){
-    int i;
+void criaPais(int **pais, int Mv[], int numeroPais){
+    int i,numeroDeCidades;
     for(i=0; i<numeroPais; i++){
         pais[i] = aleatorio(numeroDeCidades); /*e o pai aponta para a solucao desenhada*/
     }
