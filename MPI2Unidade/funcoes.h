@@ -16,7 +16,7 @@ void mutacao (int **geracao,int comprimentoGene ,int populacao);
 void novo (int **A, int **B, int nLinhas, int nColunas);
 
 #endif
-
+/* uma funcao que retorna um numero aleatorio no intervalo <0;-1> */
 int desenhar(int intervalo){
     return(rand()%intervalo);
 }
