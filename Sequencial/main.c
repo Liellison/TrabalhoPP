@@ -88,7 +88,8 @@ int main(int argc, char* argv[]){
         }
         free(pais);
         free(geracao);
-        getchar();
+	break;
+        //getchar();
     }
     return 0;
    }
