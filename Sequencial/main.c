@@ -41,8 +41,7 @@ int main(int argc, char* argv[]){
             fscanf(fileIn, "%d",&numeroDeGeracoes);
             printf("Numero de geracoes: %d\n",numeroDeGeracoes);
  
-            matrizDeDistancia = (float**)malloc(sizeof(float)*numeroDeCidades);
- 
+			matrizDeDistancia = (float**)malloc(sizeof(float *)*numeroDeCidades); 
             for(i=0; i<numeroDeCidades;i++){
                 matrizDeDistancia[i]=(float*)malloc(sizeof(float)*(numeroDeCidades));
                 for(j=0;j<numeroDeCidades;j++){
