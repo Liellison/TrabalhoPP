@@ -4,7 +4,8 @@
 #include <string.h>
 #include <math.h>
 #include <pthread.h>
- 
+
+int **solucoes; 
 int desenhar (int intervalo);
 int checkRepeticoes (int *cromossomo, int nn, int numero);
 int *aleatorio (int numeroOf);
@@ -75,7 +76,7 @@ void *clasificacao(void *arg){
     int i = 0, j = 0, min = 0;
     int *temp;
     int id = *(int *)arg;
-	int **solucoes;
+	
 	int numeroCidade = 0, populacao = 0; 
 	float **matrizDeDistancia; 
 
@@ -157,11 +158,11 @@ int main(int argc, char* argv[]){
     FILE *fileIn, *fileOUT;
     int numeroDeCidades, populacao, numeroDeGeracoes,i, j;
     int **pais;
-    int **geracao;
+    //int **geracao;
     float **matrizDeDistancia;
     float distancia;
-    int id =1;
-    pthread_t thread;
+    int id =1, id2 = 2;
+    pthread_t thread, thread2;
     pthread_attr_t attr;
     
     srand(time(0));
@@ -197,31 +198,42 @@ int main(int argc, char* argv[]){
         fclose(fileIn);
  
         pais=(int**)malloc(sizeof(int*)*populacao);
-        geracao=(int**)malloc(sizeof(int*)*populacao);
+        //geracao=(int**)malloc(sizeof(int*)*populacao);
+        solucoes=(int**)malloc(sizeof(int*)*populacao);
+
  
         criaPais(pais,numeroDeCidades,populacao);
         //clasificacao(pais, numeroDeCidades, populacao, matrizDeDistancia);
  
         fileOUT =fopen(argv[2],"w");
         for(i=0;i<numeroDeGeracoes;i++){
-            propagacao(pais,geracao,populacao,numeroDeCidades);
+            //propagacao(pais,geracao,populacao,numeroDeCidades);
+            propagacao(pais,solucoes,populacao,numeroDeCidades);
+
             //clasificacao(geracao,numeroDeCidades,populacao,matrizDeDistancia);
             //pthread_mutex_init(&mutex, NULL);
 			pthread_attr_init(&attr);
 			pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 			pthread_create(&thread, &attr, clasificacao, (void *)&id);
+			//pthread_create(&thread2, &attr, clasificacao, (void *)&id2);
 			pthread_join(thread, NULL);
+			//pthread_join(thread2, NULL);
 
 
  
             if(i%1000==0)
-            printf("O caminho mais curto em %d Geracao: %.0f\n",i,calcularCusto(numeroDeCidades,geracao[0], matrizDeDistancia));
-            fprintf(fileOUT,"%f\n", calcularCusto(numeroDeCidades,geracao[0], matrizDeDistancia));
+            //printf("O caminho mais curto em %d Geracao: %.0f\n",i,calcularCusto(numeroDeCidades,geracao[0], matrizDeDistancia));
+            /*fprintf(fileOUT,"%f\n", calcularCusto(numeroDeCidades,geracao[0], matrizDeDistancia));
             mutacao(geracao,numeroDeCidades,populacao);
-            novo(geracao,pais,populacao,numeroDeCidades);
+            novo(geracao,pais,populacao,numeroDeCidades);*/
+            fprintf(fileOUT,"%f\n", calcularCusto(numeroDeCidades,solucoes[0], matrizDeDistancia));
+            mutacao(solucoes,numeroDeCidades,populacao);
+            novo(solucoes,pais,populacao,numeroDeCidades);
         }
         fclose(fileOUT);
-        printf("A melhor solucao de custo %f e:\n",calcularCusto(numeroDeCidades,geracao[0], matrizDeDistancia));
+        printf("A melhor solucao de custo %.0f e:\n",calcularCusto(numeroDeCidades,solucoes[0], matrizDeDistancia));
+        //printf("A melhor solucao de custo %.0f e:\n",calcularCusto(numeroDeCidades,geracao[0], matrizDeDistancia));
+
         printf("[ "); /*escrevendo a melhor solucao*/
  
         for(i=0;i<numeroDeCidades;i++){
@@ -235,10 +247,12 @@ int main(int argc, char* argv[]){
         free(matrizDeDistancia);
         for(i=0;i<populacao;i++){
             free(pais[i]);
-            free(geracao[i]);
+            free(solucoes[i]);
+            //free(geracao[i]);
         }
         free(pais);
-        free(geracao);
+        free(solucoes);
+        //free(geracao);
 		break;
     }
     return 0;
