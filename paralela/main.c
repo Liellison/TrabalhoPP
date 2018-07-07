@@ -164,10 +164,13 @@ int main(int argc, char* argv[]){
     int id =1, id2 = 2;
     pthread_t thread, thread2;
     pthread_attr_t attr;
+
+    int numThread = atoi(argv[1]);
+    printf("Numero de thread: %d\n",numThread);
     
     srand(time(0));
 
-    fileIn = fopen(argv[1],"r");
+    fileIn = fopen(argv[2],"r");
     if(fileIn == NULL){
         printf("Arquivo em branco");
         getchar();
@@ -214,13 +217,17 @@ int main(int argc, char* argv[]){
             //pthread_mutex_init(&mutex, NULL);
 			pthread_attr_init(&attr);
 			pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-			pthread_create(&thread, &attr, clasificacao, (void *)&id);
-			//pthread_create(&thread2, &attr, clasificacao, (void *)&id2);
-			pthread_join(thread, NULL);
-			//pthread_join(thread2, NULL);
-
-
- 
+			pthread_t threads[numThread];
+			for (int j = 0; j < numThread; j++)
+			{
+				pthread_create(&(threads[j]), &attr, clasificacao, (void *)&id);
+			}
+			
+			for (int j = 0; j < numThread; j++)
+			{
+				pthread_join(threads[j], NULL);
+			}
+			
             if(i%1000==0)
             //printf("O caminho mais curto em %d Geracao: %.0f\n",i,calcularCusto(numeroDeCidades,geracao[0], matrizDeDistancia));
             /*fprintf(fileOUT,"%f\n", calcularCusto(numeroDeCidades,geracao[0], matrizDeDistancia));
