@@ -72,11 +72,11 @@ float calcularCusto(int numeroDeCidades, int *cromossomo, float **matrizDeDistan
 /* funcao de selecao de solucoes (cromossomos) de acordo com seus custos */
 /* classificao por selecao */
 void *clasificacao(void *arg){
-    int i, j, min;
+    int i = 0, j = 0, min = 0;
     int *temp;
     int id = *(int *)arg;
 	int **solucoes;
-	int numeroCidade, populacao; 
+	int numeroCidade = 0, populacao = 0; 
 	float **matrizDeDistancia; 
 
     for(j=0; j<(populacao-1); j++){
