@@ -3,31 +3,20 @@
 #include <time.h>
 #include <string.h>
 #include <math.h>
-#include <unistd.h>
 #include <pthread.h>
-
-/*******************    Variaveis globais    ****************************/
-int pais, numeroDeCidades, numeroPais, geracao, tamanhoGene;
-pthread_mutex_t mutex;
-/*int ini = 0, fim = 0, cont = 0;
-pthread_mutex_t mutex;
-pthread_cond_t condvar1, condvar2;*/
-/*******************    CONSTRUTOR    ****************************/
+ 
 int desenhar (int intervalo);
 int checkRepeticoes (int *cromossomo, int nn, int numero);
 int *aleatorio (int numeroOf);
-/*void criaPais (int **pais, int numeroDeCidades, int numeroPais);*/
+void criaPais (int **pais, int numeroDeCidades, int numeroPais);
 float calcularCusto(int tamanho, int *solucao, float **matrizDeDistancia);
-void clasificacao (int **solucoes, int numeroCidade, int populacao, float **matrizDeDistancia);
-/*void propagacao (int **pais, int **geracao, int numeroPais, int tamanhoGene);*/
+//void clasificacao (int **solucoes, int numeroCidade, int populacao, float **matrizDeDistancia);
+void propagacao (int **pais, int **geracao, int numeroPais, int tamanhoGene);
 void mutacao (int **geracao,int comprimentoGene ,int populacao);
 void novo (int **A, int **B, int nLinhas, int nColunas);
-
-
+ 
 /* uma funcao que retorna um numero aleatorio no intervalo <0;-1> */
-int desenhar(int intervalo){
-    return(rand()%intervalo);
-}
+int desenhar(int intervalo){return(rand()%intervalo);}
 /* uma funcao que verifica se um gene repetitivo (numero da cidade) nao e desenhado no cromossomo */
 int checkRepeticoes(int *cromossomo, int nn, int numero){
     int i;
@@ -58,7 +47,13 @@ int *aleatorio(int numeroOf){
     }while (sorteio < numeroOf);
     return nDesenhados;
 }
-
+/* A funcao geradora da primeira geracao de solucaes - pais */
+void criaPais(int **pais, int numeroDeCidades, int numeroPais){
+    int i;
+    for(i=0; i<numeroPais; i++){
+        pais[i] = aleatorio(numeroDeCidades); /*e o pai aponta para a solucao desenhada*/
+    }
+}
 /* Funcao calculando o custo da viagem entre cidades individuais 
 de acordo com a ordem contida no cromossomo */
 float calcularCusto(int numeroDeCidades, int *cromossomo, float **matrizDeDistancia){
@@ -76,10 +71,14 @@ float calcularCusto(int numeroDeCidades, int *cromossomo, float **matrizDeDistan
 }
 /* funcao de selecao de solucoes (cromossomos) de acordo com seus custos */
 /* classificao por selecao */
-void clasificacao (int **solucoes, int numeroCidade, int populacao, float **matrizDeDistancia){
+void *clasificacao(void *arg){
     int i, j, min;
     int *temp;
- 
+    int id = *(int *)arg;
+	int **solucoes;
+	int numeroCidade, populacao; 
+	float **matrizDeDistancia; 
+
     for(j=0; j<(populacao-1); j++){
         min = j;
         for(i=j+1; i<populacao;i++){
@@ -91,8 +90,42 @@ void clasificacao (int **solucoes, int numeroCidade, int populacao, float **matr
             solucoes[j]=temp;
         }
     }
+    pthread_exit(NULL);
 }
-
+/* funcao de propagacao, operando com base no cruzamento */
+void propagacao (int **pais, int **geracao, int numeroPais, int tamanhoGene){
+    int i,j,k,temp;
+    int *aVisita, visitados;
+ 
+    srand(time(NULL));
+    aVisita = (int*)malloc(sizeof(int)*tamanhoGene);
+    geracao[0] = (int*)malloc(sizeof(int)*tamanhoGene);
+    for(i=0;i<tamanhoGene;i++) /*o primeiro individuo de uma nova geracao*/
+        (geracao[0])[i] = (pais[0])[i]; /*torna-se o melhor individuo da velha geracao*/
+    for(i=1;i<numeroPais;i++){ /*o resto da geracao e criado pelo cruzamento*/
+        visitados = 0;
+        geracao[i]=(int*)malloc(sizeof(int)*tamanhoGene);
+        k=(rand()%(numeroPais/2)); /*k e um numero aleatorio no intervalo <0; (numero de nascimentos / 2) -1> para cruzar apenas individuos melhores do conjunto pai*/
+        for(j=0;j<(tamanhoGene/1);j++){
+            (geracao[i])[visitados]= (pais[k])[j];
+            aVisita[visitados] = (pais[k])[j];
+            visitados++;
+        }
+        k=(rand()%(numeroPais/2));
+        do{
+            if(j==tamanhoGene){
+                j=0;
+            }
+            temp=(pais[k])[j];
+            if(checkRepeticoes(aVisita, visitados, temp)==0){
+                (geracao[i])[visitados] = (pais[k])[j];
+                aVisita[visitados] = (pais[k])[j];
+                visitados++;
+            }
+            j++;
+        }while(visitados<tamanhoGene);
+    }
+}
 /*funcao que faz uma mutacao*/
 void mutacao (int **geracao,int comprimentoGene ,int populacao){
     int a, b, c, j, temp, los;
@@ -120,85 +153,19 @@ void novo (int **A, int **B, int nLinhas, int nColunas){
     }
 }
 
-/*******************    THREADS    ****************************/
-/* A funcao geradora da primeira geracao de solucaes - pais 
-Seguindo o exemplo do ProdutorConsumidor seria o produtor*/
-void *criaPais(void *arg){
-    int i;
-    int id = *(int *)arg;
-
-    while(1){
-        pthread_mutex_lock(&mutex);/*trava região critica*/
-        /*Falta sicronização 
-        if(cont >= TAM) {
-            pthread_cond_wait(&condvar1, &mutex);
-        }
-        */
-        for(i=0; i<numeroPais; i++){
-            pais[i] = aleatorio(numeroDeCidades);
-        }
-        /*pthread_cond_signal(&condvar2);*/
-        pthread_mutex_unlock(&mutex);
-        usleep((rand()%500000)+300000);
-    }
-    pthread_exit(NULL);
-}
-
-/* funcao de propagacao, operando com base no cruzamento 
-Seguindo o exemplo do ProdutorConsumidor seria o consumidor*/
-void *propagacao (void *arg){
-    int i,j,k,temp;
-    int *aVisita, visitados;
-    int id = *(int *)arg;
- 
-    srand(time(NULL));
-    aVisita = (int*)malloc(sizeof(int)*tamanhoGene);
-    geracao[0] = (int*)malloc(sizeof(int)*tamanhoGene);
-    pthread_mutex_lock(&mutex);
-    while(1){
-        for(i=0;i<tamanhoGene;i++) /*o primeiro individuo de uma nova geracao*/
-            (geracao[0])[i] = (pais[0])[i]; /*torna-se o melhor individuo da velha geracao*/
-        for(i=1;i<numeroPais;i++){ /*o resto da geracao e criado pelo cruzamento*/
-            visitados = 0;
-            geracao[i]=(int*)malloc(sizeof(int)*tamanhoGene);
-            k=(rand()%(numeroPais/2)); /*k e um numero aleatorio no intervalo <0; (numero de nascimentos / 2) -1> para cruzar apenas individuos melhores do conjunto pai*/
-            for(j=0;j<(tamanhoGene/1);j++){
-                (geracao[i])[visitados]= (pais[k])[j];
-                aVisita[visitados] = (pais[k])[j];
-                visitados++;
-            }
-            k=(rand()%(numeroPais/2));
-            do{
-                if(j==tamanhoGene){
-                    j=0;
-                }
-                temp=(pais[k])[j];
-                if(checkRepeticoes(aVisita, visitados, temp)==0){
-                    (geracao[i])[visitados] = (pais[k])[j];
-                    aVisita[visitados] = (pais[k])[j];
-                    visitados++;
-                }
-                j++;
-            }/*while(visitados<tamanhoGene);*/
-        }
-        /*pthread_cond_signal(&condvar1);*/
-        pthread_mutex_unlock(&mutex);
-        usleep((rand()%500000)+1000000);
-    };
-    pthread_exit(NULL);
-}
-/*******************    MAIN    ****************************/
 int main(int argc, char* argv[]){
     FILE *fileIn, *fileOUT;
     int numeroDeCidades, populacao, numeroDeGeracoes,i, j;
-    /*int **pais;*/
+    int **pais;
     int **geracao;
     float **matrizDeDistancia;
     float distancia;
-    int id1 = 1, id2 = 2;
-    pthread_t thread1, thread2;
+    int id =1;
+    pthread_t thread;
     pthread_attr_t attr;
-    srand(time(0)); /*inicializacao para a funcao rand*/
+    
+    srand(time(0));
+
     fileIn = fopen(argv[1],"r");
     if(fileIn == NULL){
         printf("Arquivo em branco");
@@ -218,8 +185,7 @@ int main(int argc, char* argv[]){
             fscanf(fileIn, "%d",&numeroDeGeracoes);
             printf("Numero de geracoes: %d\n",numeroDeGeracoes);
  
-            matrizDeDistancia = (float**)malloc(sizeof(float)*numeroDeCidades);
- 
+			matrizDeDistancia = (float**)malloc(sizeof(float *)*numeroDeCidades); 
             for(i=0; i<numeroDeCidades;i++){
                 matrizDeDistancia[i]=(float*)malloc(sizeof(float)*(numeroDeCidades));
                 for(j=0;j<numeroDeCidades;j++){
@@ -232,25 +198,21 @@ int main(int argc, char* argv[]){
  
         pais=(int**)malloc(sizeof(int*)*populacao);
         geracao=(int**)malloc(sizeof(int*)*populacao);
-
-        /*Inicializa as threads*/
-        pthread_mutex_init(&mutex, NULL);
-        pthread_attr_init(&attr);
-        pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-        /*pthread_cond_init(&condvar1, NULL);
-        pthread_cond_init(&condvar2, NULL);*/
-        pthread_create(&thread1, &attr, criaPais, (void *)&id1);
-        pthread_create(&thread2, &attr, propagacao, (void *)&id2);
-        pthread_join(thread1, NULL);
-        pthread_join(thread2, NULL);
-        /*criaPais(pais,numeroDeCidades,populacao);*/
-
-        clasificacao(pais, numeroDeCidades, populacao, matrizDeDistancia);
+ 
+        criaPais(pais,numeroDeCidades,populacao);
+        //clasificacao(pais, numeroDeCidades, populacao, matrizDeDistancia);
  
         fileOUT =fopen(argv[2],"w");
         for(i=0;i<numeroDeGeracoes;i++){
-            /*propagacao(pais,geracao,populacao,numeroDeCidades);*/
-            clasificacao(geracao,numeroDeCidades,populacao,matrizDeDistancia);
+            propagacao(pais,geracao,populacao,numeroDeCidades);
+            //clasificacao(geracao,numeroDeCidades,populacao,matrizDeDistancia);
+            //pthread_mutex_init(&mutex, NULL);
+			pthread_attr_init(&attr);
+			pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+			pthread_create(&thread, &attr, clasificacao, (void *)&id);
+			pthread_join(thread, NULL);
+
+
  
             if(i%1000==0)
             printf("O caminho mais curto em %d Geracao: %.0f\n",i,calcularCusto(numeroDeCidades,geracao[0], matrizDeDistancia));
@@ -277,9 +239,8 @@ int main(int argc, char* argv[]){
         }
         free(pais);
         free(geracao);
-        getchar();
+		break;
     }
     return 0;
    }
- 
  
