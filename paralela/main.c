@@ -11,7 +11,7 @@ int checkRepeticoes (int *cromossomo, int nn, int numero);
 int *aleatorio (int numeroOf);
 void criaPais (int **pais, int numeroDeCidades, int numeroPais);
 float calcularCusto(int tamanho, int *solucao, float **matrizDeDistancia);
-//void clasificacao (int **solucoes, int numeroCidade, int populacao, float **matrizDeDistancia);
+/*void clasificacao (int **solucoes, int numeroCidade, int populacao, float **matrizDeDistancia);*/
 void propagacao (int **pais, int **geracao, int numeroPais, int tamanhoGene);
 void mutacao (int **geracao,int comprimentoGene ,int populacao);
 void novo (int **A, int **B, int nLinhas, int nColunas);
@@ -75,7 +75,7 @@ float calcularCusto(int numeroDeCidades, int *cromossomo, float **matrizDeDistan
 void *clasificacao(void *arg){
     int i = 0, j = 0, min = 0;
     int *temp;
-    int id = *(int *)arg;
+    //int id = *(int *)arg;
 	
 	int numeroCidade = 0, populacao = 0; 
 	float **matrizDeDistancia; 
@@ -161,8 +161,8 @@ int main(int argc, char* argv[]){
     //int **geracao;
     float **matrizDeDistancia;
     float distancia;
-    int id =1, id2 = 2;
-    pthread_t thread, thread2;
+    int id =1;
+    //pthread_t thread;
     pthread_attr_t attr;
 
     int numThread = atoi(argv[1]);

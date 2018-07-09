@@ -8,11 +8,10 @@
  
 int main(int argc, char* argv[]){
     FILE *fileIn, *fileOUT;
-    int numeroDeCidades, populacao, numeroDeGeracoes,j;//i
+    int numeroDeCidades, populacao, numeroDeGeracoes,j;
     int **pais;
     int **geracao;
     float **matrizDeDistancia;
-    float **matrizDeDistanciaGlobal;
     float distancia;
     srand(time(0));
     /* inicializacao mpi*/
@@ -48,7 +47,7 @@ int main(int argc, char* argv[]){
         printf("Melhor numero de geracoes: %d\n",numeroDeGeracoes);
 
         matrizDeDistancia = (float**)malloc(sizeof(float)*numeroDeCidades);
-        //matrizDeDistanciaGlobal == (float**)malloc(numeroDeCidades*numeroDeCidades*sizeof(float));
+        /*matrizDeDistanciaGlobal == (float**)malloc(numeroDeCidades*numeroDeCidades*sizeof(float));*/
 
         for(i=0;i<numeroDeCidades;i++){
             matrizDeDistancia[i]=(float*)malloc(sizeof(float)*(numeroDeCidades));
@@ -67,8 +66,8 @@ int main(int argc, char* argv[]){
     }
     fclose(fileIn);
 
-    //pais=(int**)malloc(sizeof(int*)*populacao);
-    //geracao=(int**)malloc(sizeof(int*)*populacao);
+    pais=(int**)malloc(sizeof(int*)*populacao);
+    geracao=(int**)malloc(sizeof(int*)*populacao);
 
     criaPais(pais,Mv,populacao);
     clasificacao(pais, numeroDeCidades, populacao, matrizDeDistancia);

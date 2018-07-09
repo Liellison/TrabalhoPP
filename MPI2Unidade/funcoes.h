@@ -52,7 +52,7 @@ int *aleatorio(int numeroOf){
 }
 /* A funcao geradora da primeira geracao de solucaes - pais */
 void criaPais(int **pais, int Mv[], int numeroPais){
-    int i,numeroDeCidades;
+    int i,numeroDeCidades=0;
     for(i=0; i<numeroPais; i++){
         pais[i] = aleatorio(numeroDeCidades); /*e o pai aponta para a solucao desenhada*/
     }
