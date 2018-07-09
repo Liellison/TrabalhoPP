@@ -10,6 +10,7 @@ int main(int argc, char* argv[]){
     FILE *fileIn, *fileOUT;
     int numeroDeCidades, populacao, numeroDeGeracoes,j;
     int **pais;
+    int N = 8;
     int **geracao;
     float **matrizDeDistancia;
     float distancia;
@@ -20,9 +21,11 @@ int main(int argc, char* argv[]){
     int vec = 0;
     MPI_Status status;
 
-    MPI_Init(&argc,&argv); 
-    MPI_Comm_rank(MPI_COMM_WORLD, &id); 
-    MPI_Comm_size (MPI_COMM_WORLD, &tam);
+    MPI_Init(&argc,&argv);
+    MPI_Comm_size (MPI_COMM_WORLD, &tam); 
+    MPI_Comm_rank(MPI_COMM_WORLD, &id);
+
+    int local_nrows = N / tam; 
 
     if (id==0) {
     /*inicio leitura do arquivo*/
@@ -46,8 +49,8 @@ int main(int argc, char* argv[]){
         fscanf(fileIn, "%d",&numeroDeGeracoes);
         printf("Melhor numero de geracoes: %d\n",numeroDeGeracoes);
 
-        matrizDeDistancia = (float**)malloc(sizeof(float)*numeroDeCidades);
-        /*matrizDeDistanciaGlobal == (float**)malloc(numeroDeCidades*numeroDeCidades*sizeof(float));*/
+        //matrizDeDistancia = (float**)malloc(sizeof(float)*numeroDeCidades);
+        matrizDeDistancia == (float**)malloc(numeroDeCidades*numeroDeCidades*sizeof(float));
 
         for(i=0;i<numeroDeCidades;i++){
             matrizDeDistancia[i]=(float*)malloc(sizeof(float)*(numeroDeCidades));
@@ -65,19 +68,36 @@ int main(int argc, char* argv[]){
 
     }
     fclose(fileIn);
+	}
+    /*else{
+        MPI_Recv(&populacao,(numeroDeCidades *(populacao+1)),MPI_INT, 0, 100,MPI_COMM_WORLD, &status);
+    }*/
+	
+    //pais=(int**)malloc(sizeof(int*)*populacao);
+   	pais = (int **) malloc(populacao * N * sizeof(int));
+   	geracao=(int **) malloc(populacao * N * sizeof(int));
 
-    pais=(int**)malloc(sizeof(int*)*populacao);
-    geracao=(int**)malloc(sizeof(int*)*populacao);
+   	for (i = 0; i < local_nrows; ++i)
+   	{
+   		pais[i*N+j] = 0;
+   		geracao[i*N+j] = 0;
+   		for (j = 0; i < N; ++j)
+   		{
+   			pais[i*N+j] += (i + id * local_nrows) + j;
+   			geracao[i*N+j] += (i + id * local_nrows) - j;
+   		}
+   	}
+   	//geracao=(int**)malloc(sizeof(int*)*populacao);
+
 
     criaPais(pais,Mv,populacao);
     clasificacao(pais, numeroDeCidades, populacao, matrizDeDistancia);
+	
 
-    for( j=0;j<tam;j++){
+    /*for( j=0;j<tam;j++){
         MPI_Send(&populacao,(numeroDeCidades *(populacao+1)), MPI_INT, j, 100, MPI_COMM_WORLD);
-    }
-}else{
-        MPI_Recv(&populacao,(numeroDeCidades *(populacao+1)),MPI_INT, 0, 100,MPI_COMM_WORLD, &status);
-    }
+    }*/
+
     fileOUT =fopen(argv[2],"w");
     for(i=0;i<numeroDeGeracoes;i++){
         propagacao(pais,geracao,populacao,numeroDeCidades);
