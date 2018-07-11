@@ -9,18 +9,23 @@
 int main(int argc, char* argv[]){
     FILE *fileIn, *fileOUT;
     int numeroDeCidades, populacao, numeroDeGeracoes,j;
-    int **pais;
-    int **geracao;
+    int **pais=0;
+    /*int N =8;*/
+    int **geracao=0;
     float **matrizDeDistancia;
     float distancia;
     srand(time(0));
     /* inicializacao mpi*/
     int id, tam, i;
-    MPI_Status status;
+    /*int Mv[numeroDeCidades * numeroDeCidades];
+    int vec = 0;
+    MPI_Status status;*/
 
     MPI_Init(&argc,&argv); 
     MPI_Comm_rank(MPI_COMM_WORLD, &id); 
     MPI_Comm_size (MPI_COMM_WORLD, &tam);
+
+    /*int local_nrows = N / tam; */
 
     if (id==0) {
         /*inicio leitura do arquivo*/
@@ -52,6 +57,12 @@ int main(int argc, char* argv[]){
                 matrizDeDistancia[i][j]=distancia;
             }
         }
+        /*for(i =0; i < numeroDeCidades; i++){
+            for(j=0; j<numeroDeCidades; j++){
+                Mv[vec] = matrizDeDistancia[i][j];
+                vec = vec +1;
+            }
+        }*/
         
         fclose(fileIn);
 
@@ -81,7 +92,7 @@ int main(int argc, char* argv[]){
 
     fileOUT =fopen(argv[2],"w");
 
-    /*for(i=0;i<numeroDeGeracoes;i++){
+    for(i=0;i<numeroDeGeracoes;i++){
         propagacao(pais,geracao,populacao,numeroDeCidades);
         clasificacao(geracao,numeroDeCidades,populacao,matrizDeDistancia);
 
@@ -90,12 +101,12 @@ int main(int argc, char* argv[]){
         fprintf(fileOUT,"%f\n", calcularCusto(numeroDeCidades,geracao[0], matrizDeDistancia));
         mutacao(geracao,numeroDeCidades,populacao);
         novo(geracao,pais,populacao,numeroDeCidades);
-    }*/
+    }
     fclose(fileOUT);
     printf("A melhor solucao de custo %f e:\n",calcularCusto(numeroDeCidades,geracao[0], matrizDeDistancia));
     printf("[ "); /*escrevendo a melhor solucao*/
 
-    /*for(i=0;i<numeroDeCidades;i++){
+    for(i=0;i<numeroDeCidades;i++){
         printf("%d ",pais[0][i]);
     }
     printf("]");
@@ -112,7 +123,6 @@ int main(int argc, char* argv[]){
     }
     free(pais);
     free(geracao);
-    */
 
     MPI_Finalize();
     return 0;
