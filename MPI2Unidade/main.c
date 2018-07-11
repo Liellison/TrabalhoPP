@@ -7,24 +7,22 @@
 #include <mpi.h>
 
 int main(int argc, char* argv[]){
-    FILE *fileIn, *fileOUT;
+    FILE *fileIn = NULL, *fileOUT = NULL;
     int numeroDeCidades, populacao, numeroDeGeracoes,j;
-    int **pais=0;
+    int **pais = NULL;
     /*int N =8;*/
-    int **geracao=0;
-    float **matrizDeDistancia;
+    int **geracao = NULL;
+    float **matrizDeDistancia = NULL;
     float distancia;
-    srand(time(0));
     /* inicializacao mpi*/
     int id, tam, i;
-    /*int Mv[numeroDeCidades * numeroDeCidades];
-    int vec = 0;
-    MPI_Status status;*/
+    /*MPI_Status status;*/
 
     MPI_Init(&argc,&argv); 
     MPI_Comm_rank(MPI_COMM_WORLD, &id); 
     MPI_Comm_size (MPI_COMM_WORLD, &tam);
 
+    srand(time(0)+id);
     /*int local_nrows = N / tam; */
 
     if (id==0) {
@@ -51,22 +49,18 @@ int main(int argc, char* argv[]){
         matrizDeDistancia =  (float**)malloc(sizeof(float *)*numeroDeCidades);
 
         for(i=0;i<numeroDeCidades;i++) {
-            matrizDeDistancia[i]= (float*)malloc(sizeof(float)*(numeroDeCidades));
+            matrizDeDistancia[i]= (float*)malloc(sizeof(float)*numeroDeCidades);
             for(j=0;j<numeroDeCidades;j++) {
                 fscanf(fileIn,"%f",&distancia);
                 matrizDeDistancia[i][j]=distancia;
             }
         }
-        /*for(i =0; i < numeroDeCidades; i++){
-            for(j=0; j<numeroDeCidades; j++){
-                Mv[vec] = matrizDeDistancia[i][j];
-                vec = vec +1;
-            }
-        }*/
         
         fclose(fileIn);
 
-        criaPais(pais,populacao, populacao);
+        pais = (int **) malloc(sizeof(int *) * populacao);
+
+        criaPais(pais, populacao, numeroDeCidades);
         clasificacao(pais, numeroDeCidades, populacao, matrizDeDistancia);
 
         /* Como somente o processo de id = 0 lê o arquivo, ele deve enviar os dados lidos para os demais processos */
@@ -74,29 +68,38 @@ int main(int argc, char* argv[]){
         MPI_Bcast(&populacao, 1, MPI_INT, 0, MPI_COMM_WORLD);
         MPI_Bcast(&numeroDeGeracoes, 1, MPI_INT, 0, MPI_COMM_WORLD);
         for(i = 0; i < numeroDeCidades; i++)
-            MPI_Bcast(&matrizDeDistancia[i], numeroDeCidades, MPI_FLOAT, 0, MPI_COMM_WORLD);
+            MPI_Bcast(matrizDeDistancia[i], numeroDeCidades, MPI_FLOAT, 0, MPI_COMM_WORLD);
+        for(i = 0; i < populacao; i++)
+            MPI_Bcast(pais[i], numeroDeCidades, MPI_INT, 0, MPI_COMM_WORLD);
         
     }else{ /* Se somente o processo de id = 0 lê o arquivo, os demais processos devem receber os dados enviados por ele */
+
         MPI_Bcast(&numeroDeCidades, 1, MPI_INT, 0, MPI_COMM_WORLD);
         MPI_Bcast(&populacao, 1, MPI_INT, 0, MPI_COMM_WORLD);
         MPI_Bcast(&numeroDeGeracoes, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
         matrizDeDistancia =  (float**)malloc(sizeof(float *)*numeroDeCidades);
 
         for(i=0;i<numeroDeCidades;i++) {
             matrizDeDistancia[i]= (float*)malloc(sizeof(float)*(numeroDeCidades));
-            MPI_Bcast(&matrizDeDistancia[i], numeroDeCidades, MPI_FLOAT, 0, MPI_COMM_WORLD);
+            MPI_Bcast(matrizDeDistancia[i], numeroDeCidades, MPI_FLOAT, 0, MPI_COMM_WORLD);
+        }
+
+        pais = (int **)malloc(sizeof(int *)*populacao);
+        for(i = 0; i < populacao; i++) {
+            pais[i] = (int *)malloc(sizeof(int)*numeroDeCidades);
+            MPI_Bcast(pais[i], numeroDeCidades, MPI_INT, 0, MPI_COMM_WORLD);
         }
             
     }
 
     fileOUT =fopen(argv[2],"w");
 
+    geracao = (int **)malloc(sizeof(int *)*populacao);
     for(i=0;i<numeroDeGeracoes;i++){
         propagacao(pais,geracao,populacao,numeroDeCidades);
         clasificacao(geracao,numeroDeCidades,populacao,matrizDeDistancia);
 
-        if(i%1000==0)
+        if(i%100==0)
             printf("O caminho mais curto em %d Geracao: %.0f\n",i,calcularCusto(numeroDeCidades,geracao[0], matrizDeDistancia));
         fprintf(fileOUT,"%f\n", calcularCusto(numeroDeCidades,geracao[0], matrizDeDistancia));
         mutacao(geracao,numeroDeCidades,populacao);
@@ -109,7 +112,7 @@ int main(int argc, char* argv[]){
     for(i=0;i<numeroDeCidades;i++){
         printf("%d ",pais[0][i]);
     }
-    printf("]");
+    printf("]\n");
 
     for(i=0;i<numeroDeCidades;i++){
         free(matrizDeDistancia[i]);
