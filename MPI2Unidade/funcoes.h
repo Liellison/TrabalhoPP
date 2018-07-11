@@ -8,7 +8,7 @@
 int desenhar (int intervalo);
 int checkRepeticoes (int *cromossomo, int nn, int numero);
 int *aleatorio (int numeroOf);
-void criaPais (int **pais, int numeroDeCidades[], int numeroPais);
+void criaPais (int **pais, int numeroPais, int numeroDeCidades);
 float calcularCusto(int tamanho, int *solucao, float **matrizDeDistancia);
 void clasificacao (int **solucoes, int numeroCidade, int populacao, float **matrizDeDistancia);
 void propagacao (int **pais, int **geracao, int numeroPais, int tamanhoGene);
@@ -51,8 +51,8 @@ int *aleatorio(int numeroOf){
     return nDesenhados;
 }
 /* A funcao geradora da primeira geracao de solucaes - pais */
-void criaPais(int **pais, int Mv[], int numeroPais){
-    int i,numeroDeCidades=0;
+void criaPais(int **pais, int numeroPais, int numeroDeCidades){
+    int i;
     for(i=0; i<numeroPais; i++){
         pais[i] = aleatorio(numeroDeCidades); /*e o pai aponta para a solucao desenhada*/
     }
