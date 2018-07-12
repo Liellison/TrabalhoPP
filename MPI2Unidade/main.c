@@ -14,6 +14,7 @@ int main(int argc, char* argv[]){
     int **geracao = NULL;
     float **matrizDeDistancia = NULL;
     float distancia;
+    float ResultPrimeira, ResultSegunda;
     /* inicializacao mpi*/
     int id, tam, i;
     /*MPI_Status status;*/
@@ -95,25 +96,56 @@ int main(int argc, char* argv[]){
     fileOUT =fopen(argv[2],"w");
 
     geracao = (int **)malloc(sizeof(int *)*populacao);
-    for(i=0;i<numeroDeGeracoes;i++){
-        propagacao(pais,geracao,populacao,numeroDeCidades);
-        clasificacao(geracao,numeroDeCidades,populacao,matrizDeDistancia);
+    if (id==0) {
+	    for(i=0;i<numeroDeGeracoes/2;i++){
 
-        if(i%100==0)
-            printf("O caminho mais curto em %d Geracao: %.0f\n",i,calcularCusto(numeroDeCidades,geracao[0], matrizDeDistancia));
-        fprintf(fileOUT,"%f\n", calcularCusto(numeroDeCidades,geracao[0], matrizDeDistancia));
-        mutacao(geracao,numeroDeCidades,populacao);
-        novo(geracao,pais,populacao,numeroDeCidades);
-    }
+	        propagacao(pais,geracao,populacao,numeroDeCidades);
+	        clasificacao(geracao,numeroDeCidades,populacao,matrizDeDistancia);
+
+	        if(i%10000==0)
+	            printf("O caminho mais curto em %d Geracao do primeiro: %.0f\n",i,calcularCusto(numeroDeCidades,geracao[0], matrizDeDistancia));
+	        fprintf(fileOUT,"%f\n", calcularCusto(numeroDeCidades,geracao[0], matrizDeDistancia));
+	        ResultPrimeira = calcularCusto(numeroDeCidades,geracao[0], matrizDeDistancia);
+	        mutacao(geracao,numeroDeCidades,populacao);
+	        novo(geracao,pais,populacao,numeroDeCidades);
+
+	        MPI_Bcast(&ResultPrimeira, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	    }
+	}else{
+	    for(i=numeroDeGeracoes/2;i<numeroDeGeracoes;i++){
+
+	        propagacao(pais,geracao,populacao,numeroDeCidades);
+	        clasificacao(geracao,numeroDeCidades,populacao,matrizDeDistancia);
+
+	        if(i%10000==0)
+	            printf("O caminho mais curto em %d Geracao do segundo: %.0f\n",i,calcularCusto(numeroDeCidades,geracao[0], matrizDeDistancia));
+	        fprintf(fileOUT,"%f\n", calcularCusto(numeroDeCidades,geracao[0], matrizDeDistancia));
+	        ResultSegunda = calcularCusto(numeroDeCidades,geracao[0], matrizDeDistancia);
+	        mutacao(geracao,numeroDeCidades,populacao);
+	        novo(geracao,pais,populacao,numeroDeCidades);
+
+   	        MPI_Bcast(&ResultSegunda, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+	    }
+	}
+
     fclose(fileOUT);
-    printf("A melhor solucao de custo %f e:\n",calcularCusto(numeroDeCidades,geracao[0], matrizDeDistancia));
-    printf("[ "); /*escrevendo a melhor solucao*/
+    if (id==0) {
+    	if (ResultPrimeira >= ResultSegunda)
+    	{
+    		printf("A melhor solucao de custo %.0f é:\n", &ResultSegunda);
+    	}else{
+    		printf("A melhor solucao de custo: %.0f é:\n", &ResultPrimeira);
+    	}
+    	printf("[ "); /*escrevendo a melhor solucao*/
 
-    for(i=0;i<numeroDeCidades;i++){
-        printf("%d ",pais[0][i]);
-    }
-    printf("]\n");
-
+	    for(i=0;i<numeroDeCidades;i++){
+	        printf("%d ",pais[0][i]);
+	    }
+	    printf("]\n");
+ 	}
+    //printf("A melhor solucao de custo %f e:\n",calcularCusto(numeroDeCidades,geracao[0], matrizDeDistancia));
+    
     for(i=0;i<numeroDeCidades;i++){
         free(matrizDeDistancia[i]);
         break;
